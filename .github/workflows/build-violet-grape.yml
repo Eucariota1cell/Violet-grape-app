@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - 'violet-grape-source.zip'
+      - 'violet-grape-source-fixed.zip'
       - '.github/workflows/build-violet-grape.yml'
 
 jobs:
@@ -33,7 +33,7 @@ jobs:
           gradle-version: '8.7'
 
       - name: Descomprimir Violet Grape
-        run: unzip -q violet-grape-source.zip
+        run: unzip -q violet-grape-source-fixed.zip
 
       - name: Compilar APK
         working-directory: VioletGrapeAndroid
