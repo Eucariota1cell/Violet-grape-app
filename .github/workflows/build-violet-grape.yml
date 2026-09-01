@@ -1,11 +1,14 @@
-name: Build Violet Grape APK
+name: Build Violet Grape v1.1 APK
 
 on:
   workflow_dispatch:
   push:
     paths:
-      - 'violet-grape-source-fixed.zip'
+      - 'violet-grape-v1.1-source.zip'
       - '.github/workflows/build-violet-grape.yml'
+
+permissions:
+  contents: read
 
 jobs:
   build:
@@ -25,23 +28,34 @@ jobs:
         uses: android-actions/setup-android@v3
 
       - name: Instalar Android SDK
-        run: yes | sdkmanager "platforms;android-35" "build-tools;35.0.1"
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.1"
 
       - name: Preparar Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.7'
 
-      - name: Descomprimir Violet Grape
-        run: unzip -q violet-grape-source-fixed.zip
+      - name: Descomprimir Violet Grape v1.1
+        run: unzip -q violet-grape-v1.1-source.zip
 
-      - name: Compilar APK
+      - name: Restaurar firma permanente
         working-directory: VioletGrapeAndroid
-        run: gradle assembleDebug --stacktrace
+        env:
+          VG_KEYSTORE_BASE64: ${{ secrets.VG_KEYSTORE_BASE64 }}
+        run: |
+          test -n "$VG_KEYSTORE_BASE64"
+          echo "$VG_KEYSTORE_BASE64" | base64 --decode > app/violet-grape-release.jks
+          test -s app/violet-grape-release.jks
+
+      - name: Compilar APK firmado
+        working-directory: VioletGrapeAndroid
+        env:
+          VG_KEYSTORE_PASSWORD: ${{ secrets.VG_KEYSTORE_PASSWORD }}
+        run: gradle assembleRelease --stacktrace
 
       - name: Guardar APK
         uses: actions/upload-artifact@v4
         with:
-          name: Violet-Grape-APK
-          path: VioletGrapeAndroid/app/build/outputs/apk/debug/app-debug.apk
+          name: Violet-Grape-v1.1-APK
+          path: VioletGrapeAndroid/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
